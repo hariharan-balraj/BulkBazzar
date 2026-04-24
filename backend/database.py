@@ -63,6 +63,7 @@ async def init_db():
         # Additive migrations — safe to run on existing DBs
         for migration in [
             "ALTER TABLE listings ADD COLUMN video_url TEXT DEFAULT ''",
+            "ALTER TABLE listings ADD COLUMN store_name TEXT DEFAULT ''",
         ]:
             try:
                 await db.execute(migration)

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
 import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
+import { QualityBadge } from '../components/ListingCard.jsx'
 
 const CAT_EMOJI = {
   agriculture: '🌾', livestock: '🐄', textile: '🧵', manufacturing: '🏭',
@@ -22,6 +23,15 @@ function formatDate(dateStr) {
   return new Date(dateStr + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function QualityTooltip() {
+  return (
+    <div className="mt-2 p-2 rounded-3" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 12 }}>
+      <div className="fw-semibold mb-1" style={{ color: '#16a34a' }}>ℹ️ How is this rating calculated?</div>
+      <div style={{ color: '#374151' }}>Seller rating is based on listing completeness: description filled, photos uploaded, video added, stock quantity updated, and location mentioned.</div>
+    </div>
+  )
+}
+
 export default function ListingDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -30,6 +40,7 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true)
   const [activeImg, setActiveImg] = useState(0)
   const [showVideo, setShowVideo] = useState(false)
+  const [showRatingInfo, setShowRatingInfo] = useState(false)
 
   useEffect(() => {
     api.getListing(id)
@@ -46,6 +57,7 @@ export default function ListingDetailPage() {
   const emoji = CAT_EMOJI[listing.category] || '📦'
   const sellerInitial = (listing.seller_name || 'S')[0].toUpperCase()
   const hasVideo = !!listing.video_url
+  const mapQuery = listing.location_name ? encodeURIComponent(listing.location_name + ', India') : null
 
   function handleWhatsApp() {
     api.trackContact(listing.id).catch(() => {})
@@ -84,7 +96,6 @@ export default function ListingDetailPage() {
           <div className="row g-4">
             {/* Gallery + Video */}
             <div className="col-lg-6">
-              {/* Video / Image toggle */}
               {hasVideo && (
                 <div className="d-flex gap-2 mb-2">
                   <button
@@ -142,12 +153,27 @@ export default function ListingDetailPage() {
                 {/* Badges */}
                 <div className="d-flex flex-wrap gap-2 mb-3">
                   <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>{emoji} {listing.category}</span>
-                  <span className="badge" style={{ background: 'var(--bb-green-light)', color: 'var(--bb-green)', fontSize: 12 }}>In Stock</span>
+                  <span className="badge" style={{ background: listing.quantity > 0 ? 'var(--bb-green-light)' : '#fee2e2', color: listing.quantity > 0 ? 'var(--bb-green)' : '#dc2626', fontSize: 12 }}>
+                    {listing.quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                  </span>
                   <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>Direct Source</span>
                   {hasVideo && <span className="badge bg-dark" style={{ fontSize: 12 }}>▶ Video Available</span>}
                 </div>
 
-                <h3 className="fw-bold mb-3" style={{ color: 'var(--bb-dark)', lineHeight: 1.3 }}>{listing.title}</h3>
+                <h3 className="fw-bold mb-2" style={{ color: 'var(--bb-dark)', lineHeight: 1.3 }}>{listing.title}</h3>
+
+                {/* Quality Rating */}
+                <div className="mb-3">
+                  <div
+                    className="d-inline-flex align-items-center gap-2 cursor-pointer"
+                    onClick={() => setShowRatingInfo(v => !v)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <QualityBadge listing={listing} size="lg" />
+                    <span style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Seller Quality Score ℹ️</span>
+                  </div>
+                  {showRatingInfo && <QualityTooltip />}
+                </div>
 
                 {/* Price */}
                 <div className="p-3 rounded-3 mb-3" style={{ background: 'white', border: '1px solid var(--bb-border)' }}>
@@ -173,7 +199,7 @@ export default function ListingDetailPage() {
                 {listing.description && (
                   <div className="mb-3">
                     <div className="fw-semibold mb-1" style={{ fontSize: 14 }}>Product Details</div>
-                    <p className="text-muted" style={{ fontSize: 14, lineHeight: 1.7, margin: 0 }}>{listing.description}</p>
+                    <p className="text-muted" style={{ fontSize: 14, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-line' }}>{listing.description}</p>
                   </div>
                 )}
 
@@ -184,7 +210,12 @@ export default function ListingDetailPage() {
                     <div className="seller-avatar-bb">{sellerInitial}</div>
                     <div>
                       <div className="fw-bold" style={{ fontSize: 15 }}>{listing.seller_name || 'Seller'}</div>
-                      <div className="text-muted" style={{ fontSize: 12 }}>Supplier on BulkBazaar</div>
+                      {listing.store_name && listing.store_name !== listing.seller_name && (
+                        <div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>🏪 {listing.store_name}</div>
+                      )}
+                      {!listing.store_name && (
+                        <div className="text-muted" style={{ fontSize: 12 }}>Supplier on BulkBazaar</div>
+                      )}
                     </div>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>
@@ -215,16 +246,17 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          {/* Specs table */}
-          <div className="row mt-4">
+          <div className="row mt-4 g-4">
+            {/* Specs table */}
             <div className="col-lg-6">
               <div style={{ background: 'white', border: '1px solid var(--bb-border)', borderRadius: 14, padding: 24 }}>
                 <div className="fw-bold mb-3" style={{ fontSize: 15 }}>Product Specifications</div>
                 <table className="table table-sm mb-0" style={{ fontSize: 14 }}>
                   <tbody>
                     <tr><td className="text-muted border-0">Price</td><td className="fw-semibold border-0">₹{listing.price.toLocaleString('en-IN')} / {listing.unit}</td></tr>
-                    <tr><td className="text-muted">Stock</td><td className="fw-semibold">{listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit}` : 'On request'}</td></tr>
+                    <tr><td className="text-muted">Stock</td><td className="fw-semibold">{listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit}` : 'Out of stock'}</td></tr>
                     <tr><td className="text-muted">Location</td><td className="fw-semibold">{listing.location_name || '—'}</td></tr>
+                    {listing.store_name && <tr><td className="text-muted">Store</td><td className="fw-semibold">{listing.store_name}</td></tr>}
                     <tr><td className="text-muted">Category</td><td className="fw-semibold text-capitalize">{listing.category}</td></tr>
                     <tr><td className="text-muted">Listed On</td><td className="fw-semibold">{formatDate(listing.created_at)}</td></tr>
                     <tr><td className="text-muted border-0">Video</td><td className="fw-semibold border-0">{hasVideo ? '✓ Available' : '—'}</td></tr>
@@ -232,6 +264,34 @@ export default function ListingDetailPage() {
                 </table>
               </div>
             </div>
+
+            {/* Map */}
+            {mapQuery && (
+              <div className="col-lg-6">
+                <div style={{ background: 'white', border: '1px solid var(--bb-border)', borderRadius: 14, overflow: 'hidden' }}>
+                  <div className="fw-bold p-3 pb-2" style={{ fontSize: 15 }}>📍 Seller Location</div>
+                  <iframe
+                    title="Seller Location Map"
+                    src={`https://maps.google.com/maps?q=${mapQuery}&output=embed&z=13`}
+                    width="100%"
+                    height="240"
+                    style={{ border: 0, display: 'block' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <div className="p-2 text-center" style={{ fontSize: 12 }}>
+                    <a
+                      href={`https://maps.google.com/maps?q=${mapQuery}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--bb-green)', textDecoration: 'none' }}
+                    >
+                      View on Google Maps ↗
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

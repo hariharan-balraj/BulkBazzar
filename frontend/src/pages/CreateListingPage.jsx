@@ -21,7 +21,7 @@ export default function CreateListingPage() {
   const navigate = useNavigate()
   const imageRef = useRef()
   const videoRef = useRef()
-  const [form, setForm] = useState({ title: '', category: '', description: '', price: '', unit: 'kg', quantity: '', location_name: '' })
+  const [form, setForm] = useState({ title: '', category: '', description: '', price: '', unit: 'kg', quantity: '', location_name: '', store_name: '' })
   const [images, setImages] = useState([])
   const [videoFile, setVideoFile] = useState(null)   // { preview, url }
   const [uploading, setUploading] = useState(false)
@@ -70,6 +70,7 @@ export default function CreateListingPage() {
         price: Number(form.price), unit: form.unit,
         quantity: form.quantity ? Number(form.quantity) : 0,
         location_name: form.location_name.trim(),
+        store_name: form.store_name.trim(),
         media_urls: images.map(i => i.url),
         video_url: videoFile?.url || '',
       })
@@ -177,11 +178,18 @@ export default function CreateListingPage() {
                 </div>
               </div>
 
-              {/* Location */}
+              {/* Location & Store */}
               <div className="create-card-bb">
-                <div className="create-card-title">📍 Location</div>
-                <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Location / Market Name</label>
-                <input className="form-control" placeholder="e.g. Koyambedu Market, Chennai" value={form.location_name} onChange={e => set('location_name', e.target.value)} />
+                <div className="create-card-title">📍 Location & Business</div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Location / Market Name</label>
+                  <input className="form-control" placeholder="e.g. Koyambedu Market, Chennai" value={form.location_name} onChange={e => set('location_name', e.target.value)} />
+                </div>
+                <div>
+                  <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Store / Business Name <span className="fw-normal text-muted">(optional)</span></label>
+                  <input className="form-control" placeholder="e.g. Sri Murugan Wholesale Traders" value={form.store_name} onChange={e => set('store_name', e.target.value)} maxLength={100} />
+                  <div className="form-text">If you have a shop or business name, add it here — buyers find it more trustworthy.</div>
+                </div>
               </div>
 
               <button className="btn btn-primary btn-lg w-100" type="submit" disabled={saving || uploading || uploadingVideo}>
