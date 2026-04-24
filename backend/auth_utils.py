@@ -4,7 +4,8 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production-please")
 ALGORITHM = "HS256"
@@ -44,5 +45,5 @@ def create_access_token(user_id: int, phone: str) -> str:
 def decode_token(token: str) -> Optional[dict]:
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+    except InvalidTokenError:
         return None
