@@ -42,6 +42,20 @@ app.include_router(payment_router)
 @app.on_event("startup")
 async def startup():
     await init_db()
+    await _auto_seed()
+
+
+async def _auto_seed():
+    import asyncio
+    import aiosqlite
+    import seed as seed_module
+    async with aiosqlite.connect("app.db") as db:
+        cur = await db.execute("SELECT COUNT(*) FROM listings")
+        count = (await cur.fetchone())[0]
+    if count == 0:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, seed_module.main)
+        print("Auto-seeded 30 demo listings")
 
 
 @app.get("/health")
