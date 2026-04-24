@@ -102,12 +102,13 @@ async def create_listing(
     async with db.execute(
         """INSERT INTO listings
            (seller_id, title, description, category, price, unit,
-            quantity, location_lat, location_lng, location_name, media_urls_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            quantity, location_lat, location_lng, location_name, media_urls_json, video_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             user_id, body.title, body.description, body.category,
             body.price, body.unit, body.quantity,
-            body.location_lat, body.location_lng, body.location_name, media_json,
+            body.location_lat, body.location_lng, body.location_name,
+            media_json, body.video_url or "",
         ),
     ) as cur:
         listing_id = cur.lastrowid

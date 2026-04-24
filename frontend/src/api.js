@@ -76,6 +76,12 @@ export const api = {
     return request('POST', '/upload/image', form, true)
   },
 
+  uploadVideo: (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request('POST', '/upload/video', form, true)
+  },
+
   createSubscription: (data) => request('POST', '/payment/create-subscription', data),
 
   getPaymentConfig: () => request('GET', '/payment/config'),

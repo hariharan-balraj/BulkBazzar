@@ -60,6 +60,14 @@ async def init_db():
         await db.execute("PRAGMA journal_mode=WAL")
         for stmt in _SCHEMA:
             await db.execute(stmt)
+        # Additive migrations — safe to run on existing DBs
+        for migration in [
+            "ALTER TABLE listings ADD COLUMN video_url TEXT DEFAULT ''",
+        ]:
+            try:
+                await db.execute(migration)
+            except Exception:
+                pass  # Column already exists
         await db.commit()
 
 

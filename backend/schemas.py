@@ -31,6 +31,7 @@ class ListingCreate(BaseModel):
     location_lng: Optional[float] = 0.0
     location_name: Optional[str] = ""
     media_urls: Optional[List[str]] = []
+    video_url: Optional[str] = ""
 
 
 class ListingUpdate(BaseModel):
@@ -42,6 +43,7 @@ class ListingUpdate(BaseModel):
     quantity: Optional[float] = None
     location_name: Optional[str] = None
     media_urls: Optional[List[str]] = None
+    video_url: Optional[str] = None
     status: Optional[str] = None
 
 

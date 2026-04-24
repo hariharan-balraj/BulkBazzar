@@ -19,10 +19,13 @@ const UNITS = ['kg', 'g', 'tonne', 'litre', 'dozen', 'piece', 'box', 'bag', 'bun
 
 export default function CreateListingPage() {
   const navigate = useNavigate()
-  const fileRef = useRef()
+  const imageRef = useRef()
+  const videoRef = useRef()
   const [form, setForm] = useState({ title: '', category: '', description: '', price: '', unit: 'kg', quantity: '', location_name: '' })
   const [images, setImages] = useState([])
+  const [videoFile, setVideoFile] = useState(null)   // { preview, url }
   const [uploading, setUploading] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -42,6 +45,19 @@ export default function CreateListingPage() {
     finally { setUploading(false) }
   }
 
+  async function handleVideoSelect(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 200 * 1024 * 1024) { setError('Video must be under 200 MB'); return }
+    setUploadingVideo(true); setError('')
+    try {
+      const preview = URL.createObjectURL(file)
+      const res = await api.uploadVideo(file)
+      setVideoFile({ preview, url: res.url })
+    } catch (err) { setError('Video upload failed: ' + err.message) }
+    finally { setUploadingVideo(false) }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault(); setError('')
     if (!form.title.trim()) { setError('Title is required'); return }
@@ -53,7 +69,9 @@ export default function CreateListingPage() {
         title: form.title.trim(), category: form.category, description: form.description.trim(),
         price: Number(form.price), unit: form.unit,
         quantity: form.quantity ? Number(form.quantity) : 0,
-        location_name: form.location_name.trim(), media_urls: images.map(i => i.url),
+        location_name: form.location_name.trim(),
+        media_urls: images.map(i => i.url),
+        video_url: videoFile?.url || '',
       })
       navigate('/dashboard')
     } catch (err) { setError(err.message) }
@@ -85,14 +103,36 @@ export default function CreateListingPage() {
                     </div>
                   ))}
                   {images.length < 5 && (
-                    <div className="img-add-btn" onClick={() => fileRef.current.click()}>
+                    <div className="img-add-btn" onClick={() => imageRef.current.click()}>
                       <span style={{ fontSize: 22 }}>{uploading ? '⏳' : '📷'}</span>
                       <span>{uploading ? 'Uploading…' : 'Add Photo'}</span>
                     </div>
                   )}
                 </div>
-                <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageSelect} />
-                <div className="form-text mt-2">Good photos get 5× more enquiries. Minimum 1 photo recommended.</div>
+                <input ref={imageRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageSelect} />
+                <div className="form-text mt-2">Good photos get 5× more enquiries.</div>
+              </div>
+
+              {/* Video */}
+              <div className="create-card-bb">
+                <div className="create-card-title">🎬 Product Video <span className="text-muted fw-normal" style={{ fontSize: 13 }}>(optional — max 200 MB)</span></div>
+                {videoFile ? (
+                  <div>
+                    <video src={videoFile.preview} controls className="w-100 rounded-3 mb-2" style={{ maxHeight: 220 }} />
+                    <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => setVideoFile(null)}>Remove Video</button>
+                  </div>
+                ) : (
+                  <div
+                    className="img-add-btn w-100"
+                    style={{ width: '100%', height: 80, borderRadius: 10 }}
+                    onClick={() => videoRef.current.click()}
+                  >
+                    <span style={{ fontSize: 26 }}>{uploadingVideo ? '⏳' : '🎬'}</span>
+                    <span style={{ fontSize: 13 }}>{uploadingVideo ? 'Uploading video…' : 'Upload a product video (MP4, MOV, WebM)'}</span>
+                  </div>
+                )}
+                <input ref={videoRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleVideoSelect} />
+                <div className="form-text mt-2">Show your farm, factory or product in action. Builds buyer trust instantly.</div>
               </div>
 
               {/* Basic info */}
@@ -144,7 +184,7 @@ export default function CreateListingPage() {
                 <input className="form-control" placeholder="e.g. Koyambedu Market, Chennai" value={form.location_name} onChange={e => set('location_name', e.target.value)} />
               </div>
 
-              <button className="btn btn-primary btn-lg w-100" type="submit" disabled={saving || uploading}>
+              <button className="btn btn-primary btn-lg w-100" type="submit" disabled={saving || uploading || uploadingVideo}>
                 {saving ? 'Publishing…' : '🚀 Publish Listing'}
               </button>
             </form>

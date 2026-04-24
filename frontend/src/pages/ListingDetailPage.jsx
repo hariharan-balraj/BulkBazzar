@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
 import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
-import { incrementContact, canContact, isPromoActive } from '../contactTracker.js'
 
 const CAT_EMOJI = {
   agriculture: '🌾', livestock: '🐄', textile: '🧵', manufacturing: '🏭',
@@ -30,7 +29,7 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeImg, setActiveImg] = useState(0)
-  const [contactBlocked, setContactBlocked] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
 
   useEffect(() => {
     api.getListing(id)
@@ -43,23 +42,18 @@ export default function ListingDetailPage() {
   if (!listing) return null
 
   const isMine = user?.id === listing.seller_id
-  const isBuyer = user?.role === 'buyer'
-  const isVerified = listing.seller_subscription === 'verified'
   const imgs = listing.media_urls || []
   const emoji = CAT_EMOJI[listing.category] || '📦'
   const sellerInitial = (listing.seller_name || 'S')[0].toUpperCase()
+  const hasVideo = !!listing.video_url
 
   function handleWhatsApp() {
-    if (!canContact() && !isMine) { setContactBlocked(true); return }
-    if (isBuyer) incrementContact()
     api.trackContact(listing.id).catch(() => {})
     const msg = `Hi ${listing.seller_name || 'there'}, I saw your listing "${listing.title}" on BulkBazaar (bulkbazaar.in) and I'm interested. Could you share more details about availability and bulk pricing?`
     window.open(`https://wa.me/${listing.seller_phone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   function handleCall() {
-    if (!canContact() && !isMine) { setContactBlocked(true); return }
-    if (isBuyer) incrementContact()
     api.trackContact(listing.id).catch(() => {})
     window.location.href = `tel:${listing.seller_phone}`
   }
@@ -88,25 +82,57 @@ export default function ListingDetailPage() {
       <div style={{ background: 'var(--bb-bg)', minHeight: '100vh', padding: '32px 0 64px' }}>
         <div className="container">
           <div className="row g-4">
-            {/* Gallery */}
+            {/* Gallery + Video */}
             <div className="col-lg-6">
-              <div className="detail-gallery-main mb-2">
-                {imgs.length > 0 ? (
-                  <img src={imgs[activeImg]} alt={listing.title} />
-                ) : (
-                  <div style={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, background: 'var(--bb-bg)' }}>
-                    {emoji}
-                  </div>
-                )}
-              </div>
-              {imgs.length > 1 && (
-                <div className="d-flex gap-2 flex-wrap">
-                  {imgs.map((img, i) => (
-                    <div key={i} className={`detail-thumb-bb ${i === activeImg ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
-                      <img src={img} alt="" />
-                    </div>
-                  ))}
+              {/* Video / Image toggle */}
+              {hasVideo && (
+                <div className="d-flex gap-2 mb-2">
+                  <button
+                    className={`btn btn-sm ${!showVideo ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => setShowVideo(false)}
+                  >
+                    📷 Photos
+                  </button>
+                  <button
+                    className={`btn btn-sm ${showVideo ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => setShowVideo(true)}
+                  >
+                    ▶ Product Video
+                  </button>
                 </div>
+              )}
+
+              {showVideo && hasVideo ? (
+                <div className="detail-gallery-main mb-2">
+                  <video
+                    src={listing.video_url}
+                    controls
+                    autoPlay
+                    className="w-100"
+                    style={{ height: 380, objectFit: 'contain', background: '#000' }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="detail-gallery-main mb-2">
+                    {imgs.length > 0 ? (
+                      <img src={imgs[activeImg]} alt={listing.title} />
+                    ) : (
+                      <div style={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, background: 'var(--bb-bg)' }}>
+                        {emoji}
+                      </div>
+                    )}
+                  </div>
+                  {imgs.length > 1 && (
+                    <div className="d-flex gap-2 flex-wrap">
+                      {imgs.map((img, i) => (
+                        <div key={i} className={`detail-thumb-bb ${i === activeImg ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
+                          <img src={img} alt="" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -118,7 +144,7 @@ export default function ListingDetailPage() {
                   <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>{emoji} {listing.category}</span>
                   <span className="badge" style={{ background: 'var(--bb-green-light)', color: 'var(--bb-green)', fontSize: 12 }}>In Stock</span>
                   <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>Direct Source</span>
-                  {isVerified && <span className="badge-verified-lg">✓ Verified Supplier</span>}
+                  {hasVideo && <span className="badge bg-dark" style={{ fontSize: 12 }}>▶ Video Available</span>}
                 </div>
 
                 <h3 className="fw-bold mb-3" style={{ color: 'var(--bb-dark)', lineHeight: 1.3 }}>{listing.title}</h3>
@@ -152,18 +178,13 @@ export default function ListingDetailPage() {
                 )}
 
                 {/* Seller card */}
-                <div className="detail-seller-card p-3 rounded-3 mb-3" style={{ background: 'white', border: '1px solid var(--bb-border)' }}>
-                  <div className="fw-semibold mb-2" style={{ fontSize: 13, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Seller Information</div>
+                <div className="p-3 rounded-3 mb-3" style={{ background: 'white', border: '1px solid var(--bb-border)' }}>
+                  <div className="fw-semibold mb-2" style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Seller Information</div>
                   <div className="d-flex align-items-center gap-3 mb-2">
                     <div className="seller-avatar-bb">{sellerInitial}</div>
                     <div>
-                      <div className="fw-bold d-flex align-items-center gap-2" style={{ fontSize: 15 }}>
-                        {listing.seller_name || 'Seller'}
-                        {isVerified && <span className="badge-verified">✓ Verified</span>}
-                      </div>
-                      <div className="text-muted" style={{ fontSize: 12 }}>
-                        {isVerified ? 'Verified Supplier on BulkBazaar' : 'Supplier on BulkBazaar'}
-                      </div>
+                      <div className="fw-bold" style={{ fontSize: 15 }}>{listing.seller_name || 'Seller'}</div>
+                      <div className="text-muted" style={{ fontSize: 12 }}>Supplier on BulkBazaar</div>
                     </div>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>
@@ -173,16 +194,6 @@ export default function ListingDetailPage() {
                   </div>
                 </div>
 
-                {/* Contact blocked notice */}
-                {contactBlocked && (
-                  <div className="alert alert-warning mb-3" style={{ fontSize: 13 }}>
-                    <strong>Free contacts used up.</strong> You've used your 10 free monthly contacts.
-                    Buy a Contact Pack (₹100 for 10 contacts) or get Unlimited at ₹199/month.
-                    <br />
-                    <button className="btn btn-warning btn-sm mt-2" onClick={() => navigate('/pricing')}>View Plans</button>
-                  </div>
-                )}
-
                 {/* CTA */}
                 {!isMine ? (
                   <>
@@ -191,9 +202,7 @@ export default function ListingDetailPage() {
                       <button className="btn btn-primary btn-lg flex-fill fw-bold" onClick={handleWhatsApp}>💬 WhatsApp</button>
                     </div>
                     <div className="text-center text-muted" style={{ fontSize: 12 }}>
-                      {isPromoActive()
-                        ? '🎉 All contacts FREE during 3-month launch offer'
-                        : '✓ Direct contact — no commission charged'}
+                      ✓ Direct contact — free, no commission charged
                     </div>
                   </>
                 ) : (
@@ -213,11 +222,12 @@ export default function ListingDetailPage() {
                 <div className="fw-bold mb-3" style={{ fontSize: 15 }}>Product Specifications</div>
                 <table className="table table-sm mb-0" style={{ fontSize: 14 }}>
                   <tbody>
-                    <tr><td className="text-muted">Price</td><td className="fw-semibold">₹{listing.price.toLocaleString('en-IN')} / {listing.unit}</td></tr>
+                    <tr><td className="text-muted border-0">Price</td><td className="fw-semibold border-0">₹{listing.price.toLocaleString('en-IN')} / {listing.unit}</td></tr>
                     <tr><td className="text-muted">Stock</td><td className="fw-semibold">{listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit}` : 'On request'}</td></tr>
                     <tr><td className="text-muted">Location</td><td className="fw-semibold">{listing.location_name || '—'}</td></tr>
                     <tr><td className="text-muted">Category</td><td className="fw-semibold text-capitalize">{listing.category}</td></tr>
-                    <tr className="table-borderless"><td className="text-muted">Listed On</td><td className="fw-semibold">{formatDate(listing.created_at)}</td></tr>
+                    <tr><td className="text-muted">Listed On</td><td className="fw-semibold">{formatDate(listing.created_at)}</td></tr>
+                    <tr><td className="text-muted border-0">Video</td><td className="fw-semibold border-0">{hasVideo ? '✓ Available' : '—'}</td></tr>
                   </tbody>
                 </table>
               </div>

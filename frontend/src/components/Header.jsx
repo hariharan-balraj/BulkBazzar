@@ -8,7 +8,6 @@ export default function Header() {
   const { user, logout } = useAuth()
 
   const isSeller = user?.role === 'seller'
-  const isVerified = user?.subscription_status === 'verified'
 
   function handleLogout() {
     logout()
@@ -29,8 +28,6 @@ export default function Header() {
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#bbNav"
-          aria-controls="bbNav"
-          aria-expanded="false"
         >
           <span className="navbar-toggler-icon" />
         </button>
@@ -50,16 +47,12 @@ export default function Header() {
                 </button>
               </>
             )}
-            <button className={`nav-link-btn ${location.pathname === '/pricing' ? 'active' : ''}`} onClick={() => navigate('/pricing')}>
-              Pricing
-            </button>
           </div>
 
           <div className="d-flex align-items-center gap-2 mt-2 mt-lg-0">
             {user && (
-              <span className="d-flex align-items-center gap-2 me-1 text-muted" style={{ fontSize: 14 }}>
+              <span className="text-muted me-1" style={{ fontSize: 14 }}>
                 Hi, {user.name?.split(' ')[0] || 'User'}
-                {isVerified && <span className="badge-verified">✓ Verified</span>}
               </span>
             )}
             {isSeller && (
@@ -68,13 +61,9 @@ export default function Header() {
               </button>
             )}
             {user ? (
-              <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>
-                Logout
-              </button>
+              <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>Logout</button>
             ) : (
-              <button className="btn btn-primary btn-sm" onClick={() => navigate('/login')}>
-                Login
-              </button>
+              <button className="btn btn-primary btn-sm" onClick={() => navigate('/login')}>Login</button>
             )}
           </div>
         </div>

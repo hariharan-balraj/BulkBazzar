@@ -1,8 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
-import { useAuth } from '../App.jsx'
-import { canContact, incrementContact } from '../contactTracker.js'
 
 const CAT_EMOJI = {
   agriculture: '🌾', livestock: '🐄', textile: '🧵', manufacturing: '🏭',
@@ -10,17 +8,12 @@ const CAT_EMOJI = {
   handicrafts: '🪴', healthcare: '💊', plastics: '📦',
 }
 
-export default function ListingCard({ listing, onContactLimited }) {
+export default function ListingCard({ listing }) {
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const isVerified = listing.seller_subscription === 'verified'
-  const isBuyer = user?.role === 'buyer'
   const firstImg = listing.media_urls?.[0]
 
-  function handleWhatsApp(e) {
+  function handleContact(e) {
     e.stopPropagation()
-    if (!canContact() && isBuyer) { onContactLimited?.(); return }
-    if (isBuyer) incrementContact()
     api.trackContact(listing.id).catch(() => {})
     const msg = `Hi, I'm interested in "${listing.title}" listed on BulkBazaar (bulkbazaar.in). Is it available?`
     window.open(`https://wa.me/${listing.seller_phone}?text=${encodeURIComponent(msg)}`, '_blank')
@@ -32,17 +25,16 @@ export default function ListingCard({ listing, onContactLimited }) {
         {firstImg ? (
           <img src={firstImg} className="listing-card-img" alt={listing.title} loading="lazy" />
         ) : (
-          <div className="listing-card-img d-flex align-items-center justify-content-center bg-light fs-1">
+          <div className="listing-card-img d-flex align-items-center justify-content-center bg-light" style={{ fontSize: 48 }}>
             {CAT_EMOJI[listing.category] || '📦'}
           </div>
         )}
-        {isVerified && (
-          <span className="position-absolute top-0 start-0 m-2 badge-verified">✓ Verified</span>
+        {listing.video_url && (
+          <span className="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75" style={{ fontSize: 11 }}>
+            ▶ Video
+          </span>
         )}
-        <span
-          className="position-absolute top-0 end-0 m-2 badge bg-white text-dark shadow-sm"
-          style={{ fontSize: 12 }}
-        >
+        <span className="position-absolute top-0 end-0 m-2 badge bg-white text-dark shadow-sm" style={{ fontSize: 12 }}>
           {CAT_EMOJI[listing.category] || '📦'}
         </span>
       </div>
@@ -58,12 +50,12 @@ export default function ListingCard({ listing, onContactLimited }) {
 
       <div className="listing-card-footer">
         <span style={{ fontSize: 12, color: 'var(--bb-muted)' }}>
-          {listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit} available` : 'On request'}
+          {listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit} avail.` : 'On request'}
         </span>
         <button
           className="btn btn-sm btn-primary"
           style={{ fontSize: 12, padding: '4px 10px' }}
-          onClick={handleWhatsApp}
+          onClick={handleContact}
         >
           💬 Contact
         </button>
