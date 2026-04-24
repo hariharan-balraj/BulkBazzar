@@ -6,7 +6,7 @@ import razorpay
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from database import get_db
-from deps import get_current_user
+from deps import get_current_user_id
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 
@@ -34,7 +34,7 @@ class SubscriptionRequest(BaseModel):
 @router.post("/create-subscription")
 async def create_subscription(
     body: SubscriptionRequest,
-    user=Depends(get_current_user),
+    user_id: int = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
     if body.plan_type not in PLAN_IDS:
@@ -51,7 +51,7 @@ async def create_subscription(
             "customer_notify": 1,
             "total_count": 12,
             "notes": {
-                "user_id": str(user["id"]),
+                "user_id": str(user_id),
                 "upi_id": body.upi_id,
                 "plan_type": body.plan_type,
             },
@@ -61,7 +61,7 @@ async def create_subscription(
 
     async with db.execute(
         "INSERT INTO subscriptions (user_id, razorpay_subscription_id, plan_type, upi_id, status) VALUES (?, ?, ?, ?, 'pending')",
-        (user["id"], subscription["id"], body.plan_type, body.upi_id),
+        (user_id, subscription["id"], body.plan_type, body.upi_id),
     ):
         await db.commit()
 
