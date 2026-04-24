@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
+import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
 import ListingCard from '../components/ListingCard.jsx'
 
@@ -42,7 +43,7 @@ const SELL_STEPS = [
   { step: '3', label: 'Receive Buyer Leads', desc: 'Buyers will call or WhatsApp you directly from the listing page.' },
 ]
 
-function SellTab({ navigate }) {
+function SellTab({ navigate, onStartSelling }) {
   return (
     <div>
       {/* Sell Hero */}
@@ -59,7 +60,7 @@ function SellTab({ navigate }) {
           <button
             className="btn btn-lg fw-bold px-5 py-3"
             style={{ background: 'white', color: 'var(--bb-green)', fontSize: 16, borderRadius: 12 }}
-            onClick={() => navigate('/login')}
+            onClick={onStartSelling}
           >
             🚀 Start Selling Free →
           </button>
@@ -113,7 +114,7 @@ function SellTab({ navigate }) {
           <div className="text-center mt-4">
             <button
               className="btn btn-primary btn-lg fw-bold px-5"
-              onClick={() => navigate('/login')}
+              onClick={onStartSelling}
             >
               🚀 Create Your Free Listing Now
             </button>
@@ -131,7 +132,14 @@ function SellTab({ navigate }) {
 
 export default function FeedPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('buy')
+
+  function onStartSelling() {
+    if (!user) return navigate('/login')
+    if (user.role === 'seller') return navigate('/create')
+    navigate('/role-select')
+  }
   const [category, setCategory] = useState('all')
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -186,7 +194,7 @@ export default function FeedPage() {
       </div>
 
       {activeTab === 'sell' ? (
-        <SellTab navigate={navigate} />
+        <SellTab navigate={navigate} onStartSelling={onStartSelling} />
       ) : (
         <>
           {/* Hero */}
@@ -276,7 +284,7 @@ export default function FeedPage() {
                   {loading ? 'Loading…' : `${listings.length} bulk listings found`}
                 </div>
               </div>
-              <button className="btn btn-outline-primary btn-sm" onClick={() => setActiveTab('sell')}>
+              <button className="btn btn-outline-primary btn-sm" onClick={onStartSelling}>
                 List Your Products Free →
               </button>
             </div>
