@@ -12,12 +12,18 @@ from routes_auth import router as auth_router
 from routes_listings import router as listings_router
 from routes_events import router as events_router
 from routes_media import router as media_router
+from routes_payment import router as payment_router
 
-app = FastAPI(title="Source Discovery Marketplace", version="1.0.0")
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,https://bulkbazaar.in,https://www.bulkbazaar.in"
+).split(",")
+
+app = FastAPI(title="BulkBazaar API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,6 +36,7 @@ app.include_router(auth_router)
 app.include_router(listings_router)
 app.include_router(events_router)
 app.include_router(media_router)
+app.include_router(payment_router)
 
 
 @app.on_event("startup")

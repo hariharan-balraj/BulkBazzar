@@ -14,40 +14,32 @@ export default function RoleSelectPage() {
   async function handleContinue() {
     if (!role) { setError('Please select a role'); return }
     if (!name.trim()) { setError('Please enter your name'); return }
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
       await api.updateMe({ name: name.trim(), role })
       const me = await api.getMe()
       const token = localStorage.getItem('sdm_token')
       login(token, me)
       navigate(role === 'seller' ? '/dashboard' : '/feed')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
   }
 
   return (
-    <div className="role-page">
-      <div className="role-card-wrap">
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>🎉</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>
-            Welcome to BulkBazaar!
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-            Tell us a bit about yourself to get started.
-          </div>
+    <div className="role-page-bb">
+      <div className="role-select-wrap">
+        <div className="text-center mb-4">
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
+          <h4 className="fw-bold mb-1" style={{ color: 'var(--bb-dark)' }}>Welcome to BulkBazaar!</h4>
+          <p className="text-muted" style={{ fontSize: 14 }}>Tell us a bit about yourself to get started.</p>
         </div>
 
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error-msg-bb">⚠️ {error}</div>}
 
-        <div className="form-group" style={{ marginBottom: 24 }}>
-          <label className="form-label">Your Full Name</label>
+        <div className="mb-4">
+          <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Your Full Name</label>
           <input
-            className="form-input"
+            className="form-control"
             type="text"
             placeholder="e.g. Rajan Kumar"
             value={name}
@@ -56,33 +48,30 @@ export default function RoleSelectPage() {
           />
         </div>
 
-        <div className="form-label" style={{ marginBottom: 12 }}>I want to…</div>
+        <div className="form-label fw-semibold mb-3" style={{ fontSize: 13 }}>I want to…</div>
 
-        <div className={`role-card ${role === 'buyer' ? 'selected' : ''}`} onClick={() => setRole('buyer')}>
-          <div className="role-card-icon">🛒</div>
+        <div className={`role-card-bb ${role === 'buyer' ? 'selected' : ''}`} onClick={() => setRole('buyer')}>
+          <div className="role-icon-bb">🛒</div>
           <div>
-            <div className="role-card-title">Buy / Source Products</div>
-            <div className="role-card-desc">
-              Browse listings, compare prices, and contact sellers directly.
-              No charges for buyers.
+            <div className="fw-bold mb-1" style={{ fontSize: 15 }}>Buy / Source Products</div>
+            <div className="text-muted" style={{ fontSize: 13, lineHeight: 1.5 }}>
+              Browse listings, compare prices, and contact sellers directly. No charges for buyers.
             </div>
           </div>
         </div>
 
-        <div className={`role-card ${role === 'seller' ? 'selected' : ''}`} onClick={() => setRole('seller')}>
-          <div className="role-card-icon">🏪</div>
+        <div className={`role-card-bb ${role === 'seller' ? 'selected' : ''}`} onClick={() => setRole('seller')}>
+          <div className="role-icon-bb">🏪</div>
           <div>
-            <div className="role-card-title">Sell / List My Products</div>
-            <div className="role-card-desc">
-              Create listings with photos, price and availability. Get direct
-              leads from bulk buyers across Tamil Nadu.
+            <div className="fw-bold mb-1" style={{ fontSize: 15 }}>Sell / List My Products</div>
+            <div className="text-muted" style={{ fontSize: 13, lineHeight: 1.5 }}>
+              Create listings with photos, price and availability. Get direct leads from bulk buyers across Tamil Nadu.
             </div>
           </div>
         </div>
 
         <button
-          className="btn btn-primary btn-block btn-lg"
-          style={{ marginTop: 8 }}
+          className="btn btn-primary btn-lg w-100 mt-2"
           onClick={handleContinue}
           disabled={loading || !role}
         >

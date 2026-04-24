@@ -14,27 +14,20 @@ export default function LoginPage() {
   const [error, setError] = useState('')
 
   async function handleRequestOtp(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault(); setError('')
     const cleaned = phone.replace(/\D/g, '')
     if (cleaned.length < 10) { setError('Enter a valid 10-digit mobile number'); return }
     setLoading(true)
     try {
       const res = await api.requestOtp(cleaned)
       const dev = res.otp_dev || ''
-      setDevOtp(dev)
-      setOtp(dev)
-      setStep('otp')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+      setDevOtp(dev); setOtp(dev); setStep('otp')
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
   }
 
   async function handleVerifyOtp(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault(); setError('')
     if (otp.length !== 6) { setError('Enter the 6-digit OTP'); return }
     setLoading(true)
     try {
@@ -47,69 +40,55 @@ export default function LoginPage() {
         login(res.token, res.user)
         navigate(res.user.role === 'seller' ? '/dashboard' : '/feed')
       }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
   }
 
   return (
     <div className="auth-page">
-      {/* Left visual panel */}
+      {/* Left panel */}
       <div className="auth-visual">
-        <div className="auth-visual-inner">
-          <div className="auth-logo">Bulk<span>Bazaar</span></div>
-          <div className="auth-tagline">
-            Buy Bulk Direct from <span>Farms &amp; Factories</span>
-          </div>
-          <div className="auth-desc">
-            Tamil Nadu's B2B bulk marketplace — connect directly with farms,
-            factories and wholesalers. No middlemen, no commission, no hassle.
-          </div>
-          <div className="auth-features">
-            <div className="auth-feature">
-              <div className="auth-feature-icon">🌾</div>
-              Fresh produce directly from 500+ farms
+        <div className="auth-logo">Bulk<span>Bazaar</span></div>
+        <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, lineHeight: 1.2 }}>
+          Buy Bulk Direct from<br />
+          <span style={{ color: '#4ade80' }}>Farms & Factories</span>
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+          Tamil Nadu's B2B bulk marketplace — connect directly with farms, factories and wholesalers. No middlemen, no commission.
+        </p>
+        <div>
+          {[
+            { icon: '🌾', text: 'Fresh produce from 500+ farms' },
+            { icon: '💬', text: 'Contact sellers on WhatsApp instantly' },
+            { icon: '📊', text: 'Compare bulk prices & availability' },
+            { icon: '🆓', text: 'Zero commission — always free to browse' },
+          ].map((f, i) => (
+            <div key={i} className="auth-feature">
+              <div className="auth-feature-icon">{f.icon}</div>
+              {f.text}
             </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">💬</div>
-              Contact sellers on WhatsApp instantly
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">📊</div>
-              Compare bulk prices &amp; availability
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">🆓</div>
-              Zero commission — always free to browse
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* Right form */}
       <div className="auth-form-side">
         <div className="auth-form-wrap">
           {step === 'phone' ? (
             <>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)', marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--bb-green)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
                 bulkbazaar.in
               </div>
-              <div className="auth-form-title">Welcome to BulkBazaar 👋</div>
-              <div className="auth-form-sub">Sign in with your mobile number to continue.</div>
+              <h4 className="fw-bold mb-1" style={{ color: 'var(--bb-dark)' }}>Welcome to BulkBazaar</h4>
+              <p className="text-muted mb-4" style={{ fontSize: 14 }}>Sign in with your mobile number to continue.</p>
 
-              {error && (
-                <div className="error-msg" style={{ fontSize: 14, fontWeight: 500 }}>
-                  ⚠️ {error}
-                </div>
-              )}
+              {error && <div className="error-msg-bb">⚠️ {error}</div>}
 
               <form onSubmit={handleRequestOtp} noValidate>
-                <div className="form-group">
-                  <label className="form-label">Mobile Number</label>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Mobile Number</label>
                   <input
-                    className="form-input"
+                    className="form-control form-control-lg"
                     type="tel"
                     inputMode="numeric"
                     placeholder="e.g. 9876543210"
@@ -117,59 +96,54 @@ export default function LoginPage() {
                     onChange={e => setPhone(e.target.value)}
                     maxLength={12}
                     autoFocus
-                    autoComplete="tel"
                   />
-                  <div className="form-hint">Enter your 10-digit Indian mobile number</div>
+                  <div className="form-text">Enter your 10-digit Indian mobile number</div>
                 </div>
-                <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={loading}>
+                <button className="btn btn-primary btn-lg w-100" type="submit" disabled={loading}>
                   {loading ? 'Sending OTP…' : 'Get OTP →'}
                 </button>
               </form>
 
-              <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              <p className="text-center text-muted mt-4" style={{ fontSize: 13, lineHeight: 1.6 }}>
                 New user? You'll be asked to set up your profile after login.<br />
-                <span style={{ color: 'var(--primary)', fontWeight: 500 }}>No password needed — OTP login only.</span>
-              </div>
+                <span style={{ color: 'var(--bb-green)', fontWeight: 600 }}>No password needed — OTP login only.</span>
+              </p>
             </>
           ) : (
             <>
-              <div className="auth-form-title">Enter OTP 🔐</div>
-              <div className="auth-form-sub">Sent to +91 {phone}</div>
+              <h4 className="fw-bold mb-1" style={{ color: 'var(--bb-dark)' }}>Enter OTP</h4>
+              <p className="text-muted mb-3" style={{ fontSize: 14 }}>Sent to +91 {phone}</p>
 
               {devOtp && (
                 <div className="otp-dev-banner">
-                  <div className="otp-dev-banner-title">Dev Mode — Your OTP</div>
-                  <div className="otp-dev-banner-otp">{devOtp}</div>
-                  <div className="otp-dev-banner-hint">Auto-filled below. In production this arrives via SMS.</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>Dev Mode — Your OTP</div>
+                  <div className="otp-dev-otp">{devOtp}</div>
+                  <div style={{ fontSize: 11, color: '#92400e' }}>Auto-filled. In production this arrives via SMS.</div>
                 </div>
               )}
 
-              {error && (
-                <div className="error-msg" style={{ fontSize: 14, fontWeight: 500 }}>
-                  ⚠️ {error}
-                </div>
-              )}
+              {error && <div className="error-msg-bb">⚠️ {error}</div>}
 
               <form onSubmit={handleVerifyOtp} noValidate>
-                <div className="form-group">
-                  <label className="form-label">6-Digit OTP</label>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold" style={{ fontSize: 13 }}>6-Digit OTP</label>
                   <input
-                    className="form-input"
+                    className="form-control form-control-lg text-center fw-bold"
                     type="number"
                     inputMode="numeric"
-                    placeholder="Enter OTP"
+                    placeholder="000000"
                     value={otp}
                     onChange={e => setOtp(e.target.value.slice(0, 6))}
-                    style={{ fontSize: 22, letterSpacing: 8, textAlign: 'center', fontWeight: 700 }}
+                    style={{ fontSize: 24, letterSpacing: 8 }}
                     autoFocus
                   />
                 </div>
-                <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={loading}>
+                <button className="btn btn-primary btn-lg w-100 mb-2" type="submit" disabled={loading}>
                   {loading ? 'Verifying…' : 'Verify & Login →'}
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-block mt-8"
+                  className="btn btn-outline-secondary w-100"
                   onClick={() => { setStep('phone'); setOtp(''); setDevOtp(''); setError('') }}
                 >
                   ← Change number

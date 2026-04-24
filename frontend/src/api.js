@@ -1,3 +1,5 @@
+const BASE = import.meta.env.VITE_API_URL || ''
+
 function getToken() {
   return localStorage.getItem('sdm_token')
 }
@@ -28,7 +30,7 @@ async function request(method, path, body, isForm = false) {
 
   let res
   try {
-    res = await fetch(path, { method, headers, body: bodyData })
+    res = await fetch(BASE + path, { method, headers, body: bodyData })
   } catch {
     throw new Error('Cannot connect to server. Please check your connection.')
   }
@@ -41,8 +43,7 @@ async function request(method, path, body, isForm = false) {
 export const api = {
   requestOtp: (phone) => request('POST', '/auth/request-otp', { phone }),
 
-  verifyOtp: (phone, otp, role, name) =>
-    request('POST', '/auth/verify-otp', { phone, otp, role, name }),
+  verifyOtp: (phone, otp) => request('POST', '/auth/verify-otp', { phone, otp }),
 
   getMe: () => request('GET', '/auth/me'),
 
@@ -65,15 +66,17 @@ export const api = {
 
   deleteListing: (id) => request('DELETE', `/listings/${id}`),
 
-  trackView: (listing_id) =>
-    request('POST', '/events/view', { listing_id, event_type: 'view' }),
+  trackView: (listing_id) => request('POST', '/events/view', { listing_id, event_type: 'view' }),
 
-  trackContact: (listing_id) =>
-    request('POST', '/events/contact', { listing_id, event_type: 'contact' }),
+  trackContact: (listing_id) => request('POST', '/events/contact', { listing_id, event_type: 'contact' }),
 
   uploadImage: (file) => {
     const form = new FormData()
     form.append('file', file)
     return request('POST', '/upload/image', form, true)
   },
+
+  createSubscription: (data) => request('POST', '/payment/create-subscription', data),
+
+  getPaymentConfig: () => request('GET', '/payment/config'),
 }

@@ -4,7 +4,7 @@ import { api } from '../api.js'
 import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
 
-const PROMO_END_LABEL = 'July 31, 2026'
+const PROMO_END = 'July 31, 2026'
 const VERIFIED_FEATURES = [
   { icon: '✓', text: 'Verified badge on all your listings' },
   { icon: '📌', text: 'Priority placement in search results' },
@@ -19,17 +19,14 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
+  const isVerified = user?.subscription_status === 'verified'
 
   useEffect(() => {
-    api.getMyListings()
-      .then(setListings)
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    api.getMyListings().then(setListings).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const totalViews = listings.reduce((s, l) => s + (l.view_count || 0), 0)
   const totalContacts = listings.reduce((s, l) => s + (l.contact_count || 0), 0)
-  const isVerified = user?.subscription_status === 'verified'
 
   async function handleDelete(id, e) {
     e.stopPropagation()
@@ -37,112 +34,88 @@ export default function DashboardPage() {
     try {
       await api.deleteListing(id)
       setListings(prev => prev.filter(l => l.id !== id))
-    } catch (err) {
-      alert('Delete failed: ' + err.message)
-    }
+    } catch (err) { alert('Delete failed: ' + err.message) }
   }
 
   return (
     <>
       <Header />
-      <div className="dashboard-page">
-        <div className="container">
-          <div className="dash-header">
+      <div style={{ background: 'var(--bb-bg)', minHeight: '100vh', paddingBottom: 48 }}>
+        <div className="container py-4">
+          {/* Page header */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
-              <div className="dash-title">Seller Dashboard</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
-                Welcome back, {user?.name || 'Seller'}
-              </div>
+              <h4 className="fw-bold mb-0" style={{ color: 'var(--bb-dark)' }}>Seller Dashboard</h4>
+              <div className="text-muted" style={{ fontSize: 14 }}>Welcome back, {user?.name || 'Seller'}</div>
             </div>
-            <button className="btn btn-accent" onClick={() => navigate('/create')}>
-              + New Listing
-            </button>
+            <button className="btn btn-primary" onClick={() => navigate('/create')}>+ New Listing</button>
           </div>
 
-          {/* Premium Plan Section */}
-          <div className="dash-premium">
-            <div className="dash-premium-header">
+          {/* Premium card */}
+          <div className="dash-premium-card mb-4">
+            <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
               <div>
                 <div className="dash-premium-badge">
                   {isVerified ? '✓ Verified Plan — Active' : '⭐ Verified Plan Available'}
                 </div>
-                <div className="dash-premium-title">
+                <h5 className="fw-bold mt-2 mb-1" style={{ color: 'white' }}>
                   {isVerified ? 'You are a Verified Seller' : 'Get Verified — Build Buyer Trust'}
-                </div>
-                <div className="dash-premium-sub">
+                </h5>
+                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, margin: 0 }}>
                   {isVerified
-                    ? `Enjoy all Verified features free until ${PROMO_END_LABEL} — our 3-month launch offer.`
-                    : `Get your Verified badge free during our launch offer — valid until ${PROMO_END_LABEL}.`}
+                    ? `Enjoy all Verified features free until ${PROMO_END} — our 3-month launch offer.`
+                    : `Get your Verified badge free during our launch offer — valid until ${PROMO_END}.`}
+                </p>
+                <div className="d-flex flex-wrap gap-3 mt-3">
+                  {VERIFIED_FEATURES.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
+                      <span>{f.icon}</span> {f.text}
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="dash-premium-price">
-                <div className="dash-premium-price-orig">₹49/month after offer</div>
-                <div className="dash-premium-price-val">FREE</div>
-                <div className="dash-premium-price-note">Until {PROMO_END_LABEL}</div>
-              </div>
-            </div>
-            <div className="dash-premium-body">
-              <div className="dash-premium-features">
-                {VERIFIED_FEATURES.map((f, i) => (
-                  <div key={i} className="dash-premium-feature">
-                    <span style={{ fontWeight: 700, flexShrink: 0 }}>{f.icon}</span>
-                    {f.text}
-                  </div>
-                ))}
-              </div>
-              <div className="dash-premium-footer">
-                <div className="dash-premium-footer-note">
-                  After {PROMO_END_LABEL}: Verified Plan at ₹49/month — cancel anytime.
-                </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button className="btn btn-purple-outline btn-sm" onClick={() => navigate('/pricing')}>
-                    View All Plans
-                  </button>
-                  {!isVerified && (
-                    <button className="btn btn-purple btn-sm" onClick={() => navigate('/pricing')}>
-                      Get Verified Free
-                    </button>
-                  )}
+              <div className="text-center">
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', textDecoration: 'line-through' }}>₹49/month after offer</div>
+                <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1 }}>FREE</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Until {PROMO_END}</div>
+                <div className="d-flex gap-2 mt-3 justify-content-center">
+                  <button className="btn btn-outline-light btn-sm" onClick={() => navigate('/pricing')}>View Plans</button>
+                  {!isVerified && <button className="btn btn-light btn-sm text-purple" onClick={() => navigate('/pricing')}>Get Verified Free</button>}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="dash-stats">
-            <div className="stat-card">
-              <div className="stat-card-num">{listings.length}</div>
-              <div className="stat-card-label">Active Listings</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card-num">{totalViews}</div>
-              <div className="stat-card-label">Total Views</div>
-            </div>
-            <div className="stat-card stat-card-accent">
-              <div className="stat-card-num">{totalContacts}</div>
-              <div className="stat-card-label">Contact Requests</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card-num" style={{ fontSize: 18, color: '#7c3aed' }}>
-                {isVerified ? 'Verified' : 'Free'}
+          {/* Stats */}
+          <div className="row g-3 mb-4">
+            {[
+              { num: listings.length, lbl: 'Active Listings', color: 'var(--bb-dark)' },
+              { num: totalViews, lbl: 'Total Views', color: 'var(--bb-dark)' },
+              { num: totalContacts, lbl: 'Contact Requests', color: 'var(--bb-green)' },
+              { num: isVerified ? 'Verified' : 'Free', lbl: 'Current Plan', color: isVerified ? 'var(--bb-purple)' : 'var(--bb-muted)' },
+            ].map((s, i) => (
+              <div key={i} className="col-6 col-md-3">
+                <div className="stat-card-bb">
+                  <div className="num" style={{ color: s.color }}>{s.num}</div>
+                  <div className="lbl">{s.lbl}</div>
+                </div>
               </div>
-              <div className="stat-card-label">Current Plan</div>
-            </div>
+            ))}
           </div>
 
+          {/* Listings table */}
           {loading ? (
-            <div className="loading-screen"><div className="spinner" /></div>
+            <div className="bb-spinner"><div className="spin" /></div>
           ) : listings.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📋</div>
-              <div className="empty-state-title">No listings yet</div>
-              <div className="empty-state-desc">Create your first product listing to start receiving buyer leads.</div>
-              <button className="btn btn-primary mt-16" onClick={() => navigate('/create')}>
-                + Create First Listing
-              </button>
+            <div className="empty-state-bb">
+              <div className="empty-icon">📋</div>
+              <div className="fw-bold mb-1" style={{ fontSize: 17 }}>No listings yet</div>
+              <div className="text-muted mb-3" style={{ fontSize: 14 }}>Create your first product listing to start receiving buyer leads.</div>
+              <button className="btn btn-primary" onClick={() => navigate('/create')}>+ Create First Listing</button>
             </div>
           ) : (
-            <div className="listings-table">
-              <div className="listings-table-header">
+            <div className="listings-table-bb">
+              <div className="listings-row listings-row-head">
                 <div>Photo</div>
                 <div>Product</div>
                 <div>Price</div>
@@ -153,29 +126,25 @@ export default function DashboardPage() {
               {listings.map(l => {
                 const img = l.media_urls?.[0]
                 return (
-                  <div key={l.id} className="listings-table-row" style={{ cursor: 'pointer' }} onClick={() => navigate(`/listing/${l.id}`)}>
+                  <div key={l.id} className="listings-row" onClick={() => navigate(`/listing/${l.id}`)}>
                     {img ? (
-                      <img src={img} className="table-thumb" alt={l.title} />
+                      <img src={img} className="table-thumb-bb" alt={l.title} />
                     ) : (
-                      <div className="table-thumb" style={{ background: 'var(--primary-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                        📦
-                      </div>
+                      <div className="table-thumb-bb bg-light d-flex align-items-center justify-content-center" style={{ fontSize: 20 }}>📦</div>
                     )}
                     <div>
-                      <div className="table-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="fw-semibold d-flex align-items-center gap-2" style={{ fontSize: 13 }}>
                         {l.title}
-                        {isVerified && <span className="verified-badge" style={{ fontSize: 10 }}>✓</span>}
+                        {isVerified && <span className="badge-verified" style={{ fontSize: 9 }}>✓</span>}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {l.location_name || l.category}
-                      </div>
+                      <div className="text-muted" style={{ fontSize: 12 }}>{l.location_name || l.category}</div>
                     </div>
-                    <div className="table-price">₹{l.price.toLocaleString('en-IN')} / {l.unit}</div>
-                    <div className="table-num">👁 {l.view_count || 0}</div>
-                    <div className="table-num">📞 {l.contact_count || 0}</div>
-                    <div className="table-actions" onClick={e => e.stopPropagation()}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/listing/${l.id}`)}>View</button>
-                      <button className="btn btn-danger btn-sm" onClick={e => handleDelete(l.id, e)}>Del</button>
+                    <div className="fw-semibold text-primary" style={{ fontSize: 13 }}>₹{l.price.toLocaleString('en-IN')} / {l.unit}</div>
+                    <div className="text-muted" style={{ fontSize: 13 }}>👁 {l.view_count || 0}</div>
+                    <div className="text-muted" style={{ fontSize: 13 }}>📞 {l.contact_count || 0}</div>
+                    <div className="d-flex gap-1" onClick={e => e.stopPropagation()}>
+                      <button className="btn btn-outline-secondary btn-sm" style={{ fontSize: 11 }} onClick={() => navigate(`/listing/${l.id}`)}>View</button>
+                      <button className="btn btn-outline-danger btn-sm" style={{ fontSize: 11 }} onClick={e => handleDelete(l.id, e)}>Del</button>
                     </div>
                   </div>
                 )
@@ -185,9 +154,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <footer className="footer">
-        Bulk<strong style={{ color: 'var(--primary-light)' }}>Bazaar</strong> &copy; 2025 — Tamil Nadu's Bulk B2B Marketplace &nbsp;·&nbsp;
-        <span>bulkbazaar.in</span> &nbsp;·&nbsp; 0% Commission
+      <footer className="bb-footer">
+        Bulk<span className="accent fw-bold">Bazaar</span> &copy; 2025 &nbsp;·&nbsp; bulkbazaar.in &nbsp;·&nbsp; 0% Commission
       </footer>
     </>
   )

@@ -7,62 +7,76 @@ export default function Header() {
   const location = useLocation()
   const { user, logout } = useAuth()
 
+  const isSeller = user?.role === 'seller'
+  const isVerified = user?.subscription_status === 'verified'
+
   function handleLogout() {
     logout()
     navigate('/login')
   }
 
-  const isSeller = user?.role === 'seller'
-  const isVerified = user?.subscription_status === 'verified'
+  const home = user ? (isSeller ? '/dashboard' : '/feed') : '/feed'
 
   return (
-    <nav className="nav">
-      <div className="container nav-inner">
-        <div className="nav-logo" style={{ cursor: 'pointer' }} onClick={() => navigate(user ? (isSeller ? '/dashboard' : '/feed') : '/feed')}>
-          Bulk<span>Bazaar</span>
-        </div>
+    <nav className="bb-navbar navbar navbar-expand-lg sticky-top">
+      <div className="container">
+        <span className="navbar-brand" onClick={() => navigate(home)}>
+          Bulk<span className="accent">Bazaar</span>
+        </span>
 
-        <div className="nav-links">
-          <button className={`nav-link ${location.pathname === '/feed' ? 'active' : ''}`} onClick={() => navigate('/feed')}>
-            Browse
-          </button>
-          {isSeller && (
-            <>
-              <button className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={() => navigate('/dashboard')}>
-                My Listings
-              </button>
-              <button className={`nav-link ${location.pathname === '/create' ? 'active' : ''}`} onClick={() => navigate('/create')}>
-                + Add Listing
-              </button>
-            </>
-          )}
-          <button className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`} onClick={() => navigate('/pricing')}>
-            Pricing
-          </button>
-        </div>
+        <button
+          className="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#bbNav"
+          aria-controls="bbNav"
+          aria-expanded="false"
+        >
+          <span className="navbar-toggler-icon" />
+        </button>
 
-        <div className="nav-actions">
-          {user && (
-            <span className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              Hi, {user.name?.split(' ')[0] || 'User'}
-              {isVerified && <span className="verified-badge">✓ Verified</span>}
-            </span>
-          )}
-          {isSeller && (
-            <button className="nav-btn nav-btn-accent" onClick={() => navigate('/create')}>
-              + New Listing
+        <div className="collapse navbar-collapse" id="bbNav">
+          <div className="me-auto d-flex flex-column flex-lg-row gap-1 mt-2 mt-lg-0">
+            <button className={`nav-link-btn ${location.pathname === '/feed' ? 'active' : ''}`} onClick={() => navigate('/feed')}>
+              Browse
             </button>
-          )}
-          {user && (
-            <button className="nav-btn nav-btn-outline" onClick={handleLogout}>
-              Logout
+            {isSeller && (
+              <>
+                <button className={`nav-link-btn ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={() => navigate('/dashboard')}>
+                  My Listings
+                </button>
+                <button className={`nav-link-btn ${location.pathname === '/create' ? 'active' : ''}`} onClick={() => navigate('/create')}>
+                  + Add Listing
+                </button>
+              </>
+            )}
+            <button className={`nav-link-btn ${location.pathname === '/pricing' ? 'active' : ''}`} onClick={() => navigate('/pricing')}>
+              Pricing
             </button>
-          )}
-          {!user && (
-            <button className="nav-btn nav-btn-primary" onClick={() => navigate('/login')}>
-              Login
-            </button>
-          )}
+          </div>
+
+          <div className="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+            {user && (
+              <span className="d-flex align-items-center gap-2 me-1 text-muted" style={{ fontSize: 14 }}>
+                Hi, {user.name?.split(' ')[0] || 'User'}
+                {isVerified && <span className="badge-verified">✓ Verified</span>}
+              </span>
+            )}
+            {isSeller && (
+              <button className="btn btn-primary btn-sm" onClick={() => navigate('/create')}>
+                + New Listing
+              </button>
+            )}
+            {user ? (
+              <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>
+                Logout
+              </button>
+            ) : (
+              <button className="btn btn-primary btn-sm" onClick={() => navigate('/login')}>
+                Login
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>

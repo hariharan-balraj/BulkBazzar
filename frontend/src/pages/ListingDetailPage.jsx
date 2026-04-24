@@ -20,9 +20,7 @@ function timeAgo(dateStr) {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr + 'Z').toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  })
+  return new Date(dateStr + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default function ListingDetailPage() {
@@ -36,15 +34,12 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     api.getListing(id)
-      .then(data => {
-        setListing(data)
-        api.trackView(parseInt(id)).catch(() => {})
-      })
+      .then(data => { setListing(data); api.trackView(parseInt(id)).catch(() => {}) })
       .catch(() => navigate('/feed'))
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <><Header /><div className="loading-screen"><div className="spinner" /></div></>
+  if (loading) return <><Header /><div className="bb-spinner"><div className="spin" /></div></>
   if (!listing) return null
 
   const isMine = user?.id === listing.seller_id
@@ -52,12 +47,10 @@ export default function ListingDetailPage() {
   const isVerified = listing.seller_subscription === 'verified'
   const imgs = listing.media_urls || []
   const emoji = CAT_EMOJI[listing.category] || '📦'
+  const sellerInitial = (listing.seller_name || 'S')[0].toUpperCase()
 
   function handleWhatsApp() {
-    if (!canContact() && !isMine) {
-      setContactBlocked(true)
-      return
-    }
+    if (!canContact() && !isMine) { setContactBlocked(true); return }
     if (isBuyer) incrementContact()
     api.trackContact(listing.id).catch(() => {})
     const msg = `Hi ${listing.seller_name || 'there'}, I saw your listing "${listing.title}" on BulkBazaar (bulkbazaar.in) and I'm interested. Could you share more details about availability and bulk pricing?`
@@ -65,10 +58,7 @@ export default function ListingDetailPage() {
   }
 
   function handleCall() {
-    if (!canContact() && !isMine) {
-      setContactBlocked(true)
-      return
-    }
+    if (!canContact() && !isMine) { setContactBlocked(true); return }
     if (isBuyer) incrementContact()
     api.trackContact(listing.id).catch(() => {})
     window.location.href = `tel:${listing.seller_phone}`
@@ -76,50 +66,43 @@ export default function ListingDetailPage() {
 
   async function handleDelete() {
     if (!confirm('Delete this listing permanently?')) return
-    try {
-      await api.deleteListing(listing.id)
-      navigate('/dashboard')
-    } catch (err) {
-      alert('Failed to delete: ' + err.message)
-    }
+    try { await api.deleteListing(listing.id); navigate('/dashboard') }
+    catch (err) { alert('Failed to delete: ' + err.message) }
   }
-
-  const sellerInitial = (listing.seller_name || 'S')[0].toUpperCase()
 
   return (
     <>
       <Header />
-      <div className="detail-page">
-        {/* Breadcrumb */}
-        <div style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border-light)', padding: '10px 0' }}>
-          <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => navigate('/feed')}>Home</span>
-            <span>›</span>
-            <span style={{ cursor: 'pointer', textTransform: 'capitalize' }} onClick={() => navigate('/feed')}>{listing.category}</span>
-            <span>›</span>
-            <span style={{ color: 'var(--text)', fontWeight: 500 }}>{listing.title}</span>
-          </div>
-        </div>
 
+      {/* Breadcrumb */}
+      <div style={{ background: 'white', borderBottom: '1px solid var(--bb-border)', padding: '10px 0', fontSize: 13 }}>
+        <div className="container d-flex align-items-center gap-2 text-muted">
+          <span className="cursor-pointer" onClick={() => navigate('/feed')}>Home</span>
+          <span>›</span>
+          <span className="cursor-pointer text-capitalize" onClick={() => navigate('/feed')}>{listing.category}</span>
+          <span>›</span>
+          <span style={{ color: 'var(--bb-dark)', fontWeight: 500 }}>{listing.title}</span>
+        </div>
+      </div>
+
+      <div style={{ background: 'var(--bb-bg)', minHeight: '100vh', padding: '32px 0 64px' }}>
         <div className="container">
-          <div className="detail-grid">
+          <div className="row g-4">
             {/* Gallery */}
-            <div className="detail-gallery">
-              <div className="detail-gallery-main">
+            <div className="col-lg-6">
+              <div className="detail-gallery-main mb-2">
                 {imgs.length > 0 ? (
                   <img src={imgs[activeImg]} alt={listing.title} />
                 ) : (
-                  <div className="detail-gallery-placeholder">{emoji}</div>
+                  <div style={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, background: 'var(--bb-bg)' }}>
+                    {emoji}
+                  </div>
                 )}
               </div>
               {imgs.length > 1 && (
-                <div className="detail-gallery-thumbs">
+                <div className="d-flex gap-2 flex-wrap">
                   {imgs.map((img, i) => (
-                    <div
-                      key={i}
-                      className={`detail-gallery-thumb ${i === activeImg ? 'active' : ''}`}
-                      onClick={() => setActiveImg(i)}
-                    >
+                    <div key={i} className={`detail-thumb-bb ${i === activeImg ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
                       <img src={img} alt="" />
                     </div>
                   ))}
@@ -128,143 +111,123 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Info */}
-            <div className="detail-info">
-              <div className="detail-badge-row">
-                <span className="detail-badge badge-cat">{emoji} {listing.category}</span>
-                <span className="detail-badge badge-avail">In Stock</span>
-                <span className="detail-badge badge-fresh">Direct Source</span>
-                {isVerified && <span className="verified-badge-lg">✓ Verified Supplier</span>}
-              </div>
-
-              <h1 className="detail-title">{listing.title}</h1>
-
-              <div className="detail-price-block">
-                <div className="detail-price">
-                  ₹{listing.price.toLocaleString('en-IN')}
-                  <span> / {listing.unit}</span>
+            <div className="col-lg-6">
+              <div style={{ position: 'sticky', top: 80 }}>
+                {/* Badges */}
+                <div className="d-flex flex-wrap gap-2 mb-3">
+                  <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>{emoji} {listing.category}</span>
+                  <span className="badge" style={{ background: 'var(--bb-green-light)', color: 'var(--bb-green)', fontSize: 12 }}>In Stock</span>
+                  <span className="badge bg-light text-dark border" style={{ fontSize: 12 }}>Direct Source</span>
+                  {isVerified && <span className="badge-verified-lg">✓ Verified Supplier</span>}
                 </div>
-                <div className="detail-qty-row">
-                  {listing.quantity > 0 && (
-                    <div className="detail-qty-item">
-                      <div className="detail-qty-label">Available Qty</div>
-                      <div className="detail-qty-val">{listing.quantity.toLocaleString('en-IN')} {listing.unit}</div>
-                    </div>
-                  )}
-                  <div className="detail-qty-item">
-                    <div className="detail-qty-label">Unit</div>
-                    <div className="detail-qty-val">{listing.unit}</div>
-                  </div>
-                  <div className="detail-qty-item">
-                    <div className="detail-qty-label">Category</div>
-                    <div className="detail-qty-val" style={{ textTransform: 'capitalize' }}>{listing.category}</div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Specs */}
-              <div className="detail-section">
-                <div className="detail-section-title">Product Details</div>
-                <div className="detail-specs">
-                  <div className="detail-spec-item">
-                    <div className="detail-spec-label">Price</div>
-                    <div className="detail-spec-val">₹{listing.price.toLocaleString('en-IN')} / {listing.unit}</div>
-                  </div>
-                  <div className="detail-spec-item">
-                    <div className="detail-spec-label">Stock</div>
-                    <div className="detail-spec-val">{listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit}` : 'On request'}</div>
-                  </div>
-                  <div className="detail-spec-item">
-                    <div className="detail-spec-label">Location</div>
-                    <div className="detail-spec-val">{listing.location_name || '—'}</div>
-                  </div>
-                  <div className="detail-spec-item">
-                    <div className="detail-spec-label">Listed On</div>
-                    <div className="detail-spec-val">{formatDate(listing.created_at)}</div>
-                  </div>
-                </div>
-              </div>
+                <h3 className="fw-bold mb-3" style={{ color: 'var(--bb-dark)', lineHeight: 1.3 }}>{listing.title}</h3>
 
-              {listing.description && (
-                <div className="detail-section">
-                  <div className="detail-section-title">Description</div>
-                  <div className="detail-desc">{listing.description}</div>
-                </div>
-              )}
-
-              {/* Seller */}
-              <div className="detail-section">
-                <div className="detail-section-title">Seller Information</div>
-                <div className="detail-seller-card">
-                  <div className="detail-seller-top">
-                    <div className="detail-seller-avatar">{sellerInitial}</div>
-                    <div>
-                      <div className="detail-seller-name" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {listing.seller_name || 'Seller'}
-                        {isVerified && <span className="verified-badge">✓ Verified</span>}
+                {/* Price */}
+                <div className="p-3 rounded-3 mb-3" style={{ background: 'white', border: '1px solid var(--bb-border)' }}>
+                  <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--bb-green)' }}>
+                    ₹{listing.price.toLocaleString('en-IN')}
+                    <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--bb-muted)' }}> / {listing.unit}</span>
+                  </div>
+                  <div className="d-flex gap-4 mt-2">
+                    {listing.quantity > 0 && (
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Available Qty</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{listing.quantity.toLocaleString('en-IN')} {listing.unit}</div>
                       </div>
-                      <div className="detail-seller-role">
+                    )}
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Location</div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{listing.location_name || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {listing.description && (
+                  <div className="mb-3">
+                    <div className="fw-semibold mb-1" style={{ fontSize: 14 }}>Product Details</div>
+                    <p className="text-muted" style={{ fontSize: 14, lineHeight: 1.7, margin: 0 }}>{listing.description}</p>
+                  </div>
+                )}
+
+                {/* Seller card */}
+                <div className="detail-seller-card p-3 rounded-3 mb-3" style={{ background: 'white', border: '1px solid var(--bb-border)' }}>
+                  <div className="fw-semibold mb-2" style={{ fontSize: 13, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Seller Information</div>
+                  <div className="d-flex align-items-center gap-3 mb-2">
+                    <div className="seller-avatar-bb">{sellerInitial}</div>
+                    <div>
+                      <div className="fw-bold d-flex align-items-center gap-2" style={{ fontSize: 15 }}>
+                        {listing.seller_name || 'Seller'}
+                        {isVerified && <span className="badge-verified">✓ Verified</span>}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: 12 }}>
                         {isVerified ? 'Verified Supplier on BulkBazaar' : 'Supplier on BulkBazaar'}
                       </div>
                     </div>
                   </div>
-                  <div className="detail-seller-info">
-                    <div className="detail-seller-row">📱 <strong>{listing.seller_phone}</strong></div>
-                    {listing.location_name && (
-                      <div className="detail-seller-row">📍 <strong>{listing.location_name}</strong></div>
-                    )}
-                    <div className="detail-seller-row">🕐 Last updated <strong>{timeAgo(listing.created_at)}</strong></div>
+                  <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>
+                    <div>📱 <strong style={{ color: 'var(--bb-dark)' }}>{listing.seller_phone}</strong></div>
+                    {listing.location_name && <div className="mt-1">📍 <strong style={{ color: 'var(--bb-dark)' }}>{listing.location_name}</strong></div>}
+                    <div className="mt-1">🕐 Updated <strong style={{ color: 'var(--bb-dark)' }}>{timeAgo(listing.created_at)}</strong></div>
                   </div>
                 </div>
+
+                {/* Contact blocked notice */}
+                {contactBlocked && (
+                  <div className="alert alert-warning mb-3" style={{ fontSize: 13 }}>
+                    <strong>Free contacts used up.</strong> You've used your 10 free monthly contacts.
+                    Buy a Contact Pack (₹100 for 10 contacts) or get Unlimited at ₹199/month.
+                    <br />
+                    <button className="btn btn-warning btn-sm mt-2" onClick={() => navigate('/pricing')}>View Plans</button>
+                  </div>
+                )}
+
+                {/* CTA */}
+                {!isMine ? (
+                  <>
+                    <div className="d-flex gap-2 mb-2">
+                      <button className="btn btn-outline-primary btn-lg flex-fill fw-bold" onClick={handleCall}>📞 Call Seller</button>
+                      <button className="btn btn-primary btn-lg flex-fill fw-bold" onClick={handleWhatsApp}>💬 WhatsApp</button>
+                    </div>
+                    <div className="text-center text-muted" style={{ fontSize: 12 }}>
+                      {isPromoActive()
+                        ? '🎉 All contacts FREE during 3-month launch offer'
+                        : '✓ Direct contact — no commission charged'}
+                    </div>
+                  </>
+                ) : (
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-outline-secondary flex-fill" onClick={() => navigate('/dashboard')}>← Dashboard</button>
+                    <button className="btn btn-outline-danger flex-fill" onClick={handleDelete}>Delete Listing</button>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
 
-              {/* Contact blocked notice */}
-              {contactBlocked && (
-                <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-                  <div style={{ fontWeight: 700, color: '#78350f', marginBottom: 4 }}>Free contacts used up</div>
-                  <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.5 }}>
-                    You've used your 10 free monthly contacts. Buy a Contact Pack (₹100 for 10 contacts) or get Unlimited access at ₹199/month.
-                  </div>
-                  <button className="btn btn-accent btn-sm" style={{ marginTop: 10 }} onClick={() => navigate('/pricing')}>
-                    View Plans
-                  </button>
-                </div>
-              )}
-
-              {/* CTA */}
-              {!isMine ? (
-                <>
-                  <div className="detail-cta">
-                    <button className="btn btn-call" onClick={handleCall}>
-                      📞 Call Seller
-                    </button>
-                    <button className="btn btn-whatsapp" onClick={handleWhatsApp}>
-                      💬 WhatsApp
-                    </button>
-                  </div>
-                  <div className="detail-updated">
-                    {isPromoActive()
-                      ? '🎉 All contacts FREE during 3-month launch offer'
-                      : 'Direct contact — no commission charged'}
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => navigate('/dashboard')}>
-                    ← Dashboard
-                  </button>
-                  <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleDelete}>
-                    Delete Listing
-                  </button>
-                </div>
-              )}
+          {/* Specs table */}
+          <div className="row mt-4">
+            <div className="col-lg-6">
+              <div style={{ background: 'white', border: '1px solid var(--bb-border)', borderRadius: 14, padding: 24 }}>
+                <div className="fw-bold mb-3" style={{ fontSize: 15 }}>Product Specifications</div>
+                <table className="table table-sm mb-0" style={{ fontSize: 14 }}>
+                  <tbody>
+                    <tr><td className="text-muted">Price</td><td className="fw-semibold">₹{listing.price.toLocaleString('en-IN')} / {listing.unit}</td></tr>
+                    <tr><td className="text-muted">Stock</td><td className="fw-semibold">{listing.quantity > 0 ? `${listing.quantity.toLocaleString('en-IN')} ${listing.unit}` : 'On request'}</td></tr>
+                    <tr><td className="text-muted">Location</td><td className="fw-semibold">{listing.location_name || '—'}</td></tr>
+                    <tr><td className="text-muted">Category</td><td className="fw-semibold text-capitalize">{listing.category}</td></tr>
+                    <tr className="table-borderless"><td className="text-muted">Listed On</td><td className="fw-semibold">{formatDate(listing.created_at)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="footer">
-        Bulk<strong style={{ color: 'var(--primary-light)' }}>Bazaar</strong> &copy; 2025 — Tamil Nadu's Bulk B2B Marketplace &nbsp;·&nbsp;
-        <span>bulkbazaar.in</span> &nbsp;·&nbsp; 0% Commission
+      <footer className="bb-footer">
+        Bulk<span className="accent fw-bold">Bazaar</span> &copy; 2025 &nbsp;·&nbsp; bulkbazaar.in &nbsp;·&nbsp; 0% Commission
       </footer>
     </>
   )

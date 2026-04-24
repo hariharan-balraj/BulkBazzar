@@ -42,6 +42,16 @@ _SCHEMA = [
     "CREATE INDEX IF NOT EXISTS idx_listings_seller ON listings(seller_id, created_at)",
     "CREATE INDEX IF NOT EXISTS idx_listings_cat ON listings(category, status, created_at)",
     "CREATE INDEX IF NOT EXISTS idx_events_listing ON events(listing_id, created_at)",
+    """CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        razorpay_subscription_id TEXT,
+        plan_type TEXT NOT NULL,
+        upi_id TEXT DEFAULT '',
+        status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )""",
 ]
 
 
